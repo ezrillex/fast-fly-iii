@@ -1,0 +1,6 @@
+{
+  "appId": "dev.abarca.fastfly",
+  "appName": "fast-fly",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

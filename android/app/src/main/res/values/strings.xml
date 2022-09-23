@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">fast-fly</string>
+    <string name="title_activity_main">fast-fly</string>
+    <string name="package_name">dev.abarca.fastfly</string>
+    <string name="custom_url_scheme">dev.abarca.fastfly</string>
+</resources>
