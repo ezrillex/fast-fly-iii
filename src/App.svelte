@@ -1,4 +1,8 @@
 <script>
+	import "@capacitor-community/http";
+	import {Plugins} from "@capacitor/core";
+	const Http = Plugins.CapacitorHttp;
+
 	let invalid_description = "";
 	let invalid_amount = "";
 	let invalid_destination_account = "";
@@ -7,7 +11,7 @@
 	let confirm_transaction = false;
 	let working = false;
 	let new_template = false;
-	let template = { };
+	let template = {};
 	let api_key = localStorage.getItem("api_key");
 	let api_end = localStorage.getItem("api_end");
 	if (api_key === null || api_end === null) get_api_info = true;
@@ -25,13 +29,76 @@
 		get_api_info = false;
 	}
 
+	let last = "";
 	async function send() {
 		console.log("sending...");
 		// todo if fail offer to reset keys
-		return "response parsed here";
+
+		// const options = {
+		// 	method: "POST",
+		// 	headers: {
+		// 		"Content-Type": "application/json",
+		// 		Accept: "application/json",
+		// 		Authorization:
+		// 			"Bearer " + api_key,
+		// 	},
+		// 	body: JSON.stringify( { "transactions": [ template ] } )
+		// };
+
+		let error = false;
+
+		const options = {
+			url: api_end + "/transactions",
+			headers: {
+				"Content-Type": "application/json",
+				Accept: "application/json",
+				Authorization:
+					"Bearer " + api_key,
+			},
+			
+			data: JSON.stringify( { "transactions": [ template ] } )
+		};
+
+		const reply = await Http.post(options)
+			.then((response) => {
+				if (response.status !== 200) {
+					error = true;
+				}
+				console.log("RESPONSE:");
+				console.log(response);
+				last = JSON.stringify(response);
+			})
+			.catch((err) => {
+				error = true;
+				console.log(err);
+			});
+
+		// let reply = await fetch(api_end + "/transactions", options)
+		// 	.then((response) => {
+		// 		if (response.status !== 200) {
+		// 			error = true;
+		// 		}
+		// 		console.log("RESPONSE:");
+		// 		console.log(response);
+		// 		last = JSON.stringify(response);
+		// 	})
+		// 	// .then((response) => {
+		// 	// 	console.log(response)
+		// 	// 	console.log(response.status)
+		// 	// })
+		// 	.catch((err) => {
+		// 		error = true;
+		// 		console.log(err);
+		// 	});
+		console.log("reply:");
+		console.log(reply);
+
+		return error;
 	}
 
-	function confirm() {
+	async function confirm() {
+		template.date = new Date().toISOString();
+		template.notes = "Added through FAST FIREFLY III app.";
 		working = true;
 	}
 
@@ -46,7 +113,7 @@
 	}
 
 	function newtemplate() {
-		template = { };
+		template = {};
 		new_template = true;
 	}
 
@@ -56,17 +123,17 @@
 		let vda = validate_destination_account();
 		let vsa = validate_source_account();
 
-		if(va && vd && vda && vsa){
+		if (va && vd && vda && vsa) {
 			console.log("valid");
-			working = true
+			working = true;
 			templates.push({
 				type: template.type,
 				amount: template.amount.toFixed(2),
 				description: template.description,
 				source_name: template.source_name,
-				destination_name: template.destination_name
-			})
-			localStorage.setItem("templates",JSON.stringify(templates))
+				destination_name: template.destination_name,
+			});
+			localStorage.setItem("templates", JSON.stringify(templates));
 		}
 	}
 
@@ -138,8 +205,14 @@
 	{#if working}
 		{#await send()}
 			to do spinner here
-		{:then data}
-			{data}
+		{:then error}
+			{#if error === true}
+				An error has occured TODO offer info or delete keys
+				{last}
+			{:else}
+				success! TODO check icon here
+				{last}
+			{/if}
 			<div class="d-flex  justify-content-center">
 				<button on:click={go_home} class="p-2 btn btn-outline-primary"
 					>Go Back</button
@@ -149,11 +222,11 @@
 	{:else}
 		<h3 class="text-center">Are you sure?</h3>
 		<div class="d-flex flex-column align-items-center">
-			<p>transaction details here list</p>
-			<p>transaction details here list</p>
-			<p>transaction details here list</p>
-			<p>transaction details here list</p>
-			<p>transaction details here list</p>
+			<p>Description: {template.description}</p>
+			<p>Source Account: {template.source_name}</p>
+			<p>Destination Account: {template.destination_name}</p>
+			<p>Type: {template.type}</p>
+			<p>Amount: ${template.amount}</p>
 		</div>
 		<div class="d-flex  justify-content-center">
 			<button on:click={confirm} class="p-2 btn btn-success m-2"
@@ -166,7 +239,7 @@
 	{/if}
 {:else if new_template}
 	{#if working}
-		<h1>Saved!...</h1>
+		<h1>Saved!</h1>
 		<div class="d-flex  justify-content-center">
 			<button on:click={go_home} class="p-2 btn btn-outline-primary"
 				>Go Back</button
@@ -251,20 +324,26 @@
 				>Cancel</button
 			>
 		</div>
-		<button on:click={() => console.log(template)}>debug</button>
+		<!-- <button on:click={() => console.log(template)}>debug</button> -->
 	{/if}
 {:else}
 	<!-- LIST TRANSACTIONS -->
+	{#each templates as t, index}
+		<hr />
+		<div
+			on:click={() => {
+				confirm_transaction = true;
+				template = templates[index];
+			}}
+			class="pt-3 pb-3"
+		>
+			{t.description} ${t.amount} <br />
+			{t.source_name} -> {t.destination_name} <br />
+			{t.type} CATEGORY
+		</div>
+	{/each}
 	<hr />
-	<div on:click={() => (confirm_transaction = true)} class="debug pt-3 pb-3">
-		Soda $1.35
-	</div>
 
-	<hr />
-	<div class="debug pt-3 pb-3">Soda $1.35</div>
-	<hr />
-	<div class="debug pt-3 pb-3">Soda $1.35</div>
-	<hr />
 	<div class="d-flex  justify-content-center">
 		<button on:click={newtemplate} class="p-2 btn btn-outline-dark"
 			>New Template</button
