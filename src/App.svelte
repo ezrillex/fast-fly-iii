@@ -2,8 +2,8 @@
 	import "@capacitor-community/http";
 	import {Plugins} from "@capacitor/core";
 	const Http = Plugins.CapacitorHttp;
-
 	let invalid_description = "";
+	let invalid_category = "";
 	let invalid_amount = "";
 	let invalid_destination_account = "";
 	let invalid_source_account = "";
@@ -31,20 +31,7 @@
 
 	let last = "";
 	async function send() {
-		console.log("sending...");
-		// todo if fail offer to reset keys
-
-		// const options = {
-		// 	method: "POST",
-		// 	headers: {
-		// 		"Content-Type": "application/json",
-		// 		Accept: "application/json",
-		// 		Authorization:
-		// 			"Bearer " + api_key,
-		// 	},
-		// 	body: JSON.stringify( { "transactions": [ template ] } )
-		// };
-
+		
 		let error = false;
 
 		const options = {
@@ -59,7 +46,7 @@
 			data: JSON.stringify( { "transactions": [ template ] } )
 		};
 
-		const reply = await Http.post(options)
+		await Http.post(options)
 			.then((response) => {
 				if (response.status !== 200) {
 					error = true;
@@ -73,25 +60,7 @@
 				console.log(err);
 			});
 
-		// let reply = await fetch(api_end + "/transactions", options)
-		// 	.then((response) => {
-		// 		if (response.status !== 200) {
-		// 			error = true;
-		// 		}
-		// 		console.log("RESPONSE:");
-		// 		console.log(response);
-		// 		last = JSON.stringify(response);
-		// 	})
-		// 	// .then((response) => {
-		// 	// 	console.log(response)
-		// 	// 	console.log(response.status)
-		// 	// })
-		// 	.catch((err) => {
-		// 		error = true;
-		// 		console.log(err);
-		// 	});
-		console.log("reply:");
-		console.log(reply);
+
 
 		return error;
 	}
@@ -110,6 +79,7 @@
 		invalid_amount = "";
 		invalid_destination_account = "";
 		invalid_source_account = "";
+		invalid_category = "";
 	}
 
 	function newtemplate() {
@@ -122,8 +92,9 @@
 		let va = validate_amount();
 		let vda = validate_destination_account();
 		let vsa = validate_source_account();
+		let vc = validate_category();
 
-		if (va && vd && vda && vsa) {
+		if (va && vd && vda && vsa && vc) {
 			console.log("valid");
 			working = true;
 			templates.push({
@@ -132,8 +103,29 @@
 				description: template.description,
 				source_name: template.source_name,
 				destination_name: template.destination_name,
+				category_name: template.category_name
 			});
 			localStorage.setItem("templates", JSON.stringify(templates));
+		}
+	}
+
+	function delete_template(){
+		let index = templates.findIndex(element=> element === template)
+		templates.splice(index, 1)
+		go_home()
+		template = {}
+	}
+
+	function validate_category(){
+		if (
+			typeof template.category_name !== "string" ||
+			template.category_name.trim().length === 0
+		) {
+			invalid_category = " is-invalid ";
+			return false;
+		} else {
+			invalid_category = "";
+			return true;
 		}
 	}
 
@@ -220,7 +212,7 @@
 			</div>
 		{/await}
 	{:else}
-		<h3 class="text-center">Are you sure?</h3>
+		<h3 class="text-center">Actions:</h3>
 		<div class="d-flex flex-column align-items-center">
 			<p>Description: {template.description}</p>
 			<p>Source Account: {template.source_name}</p>
@@ -230,9 +222,12 @@
 		</div>
 		<div class="d-flex  justify-content-center">
 			<button on:click={confirm} class="p-2 btn btn-success m-2"
-				>Confirm</button
+				>Send Transaction</button
 			>
-			<button on:click={go_home} class="p-2 btn btn-outline-danger m-2"
+			<button on:click={delete_template} class="p-2 btn btn-danger m-2"
+				>Delete Template</button
+			>
+			<button on:click={go_home} class="p-2 btn btn-outline-dark m-2"
 				>Cancel</button
 			>
 		</div>
@@ -314,6 +309,20 @@
 			</div>
 		</div>
 
+		<div class="input-group mb-3 ">
+			<span class="input-group-text">Category</span>
+			<input
+				bind:value={template.category_name}
+				type="text"
+				on:change={validate_category}
+				class={"form-control" + invalid_category}
+				aria-describedby="catValidation"
+			/>
+			<div id="catValidation" class="invalid-feedback">
+				The field 'description' is required
+			</div>
+		</div>
+
 		<div class="d-flex  justify-content-center">
 			<button
 				type="submit"
@@ -324,7 +333,6 @@
 				>Cancel</button
 			>
 		</div>
-		<!-- <button on:click={() => console.log(template)}>debug</button> -->
 	{/if}
 {:else}
 	<!-- LIST TRANSACTIONS -->
@@ -339,7 +347,7 @@
 		>
 			{t.description} ${t.amount} <br />
 			{t.source_name} -> {t.destination_name} <br />
-			{t.type} CATEGORY
+			{t.type} {t.category_name}
 		</div>
 	{/each}
 	<hr />
