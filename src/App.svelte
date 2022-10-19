@@ -114,6 +114,7 @@
 		templates.splice(index, 1)
 		go_home()
 		template = {}
+		localStorage.setItem("templates", JSON.stringify(templates))
 	}
 
 	function validate_category(){
