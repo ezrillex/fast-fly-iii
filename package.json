@@ -17,6 +17,7 @@
     "@capacitor-community/http": "^1.4.1",
     "@capacitor/android": "^4.3.0",
     "@capacitor/cli": "^4.3.0",
-    "@capacitor/core": "^4.3.0"
+    "@capacitor/core": "^4.3.0",
+    "svelte-spa-router": "^3.3.0"
   }
 }
